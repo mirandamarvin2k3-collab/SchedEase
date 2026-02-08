@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SchedEase: Intelligent Class Scheduling</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#7c3aed;
+      --muted:rgb(184,184,184);
+      --glass:rgba(255,255,255,0.03);
+      --announce-gradient: linear-gradient(135deg,#0099ff,#b22eff);
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    /* reset & base */
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    html,body {height:100%;width:100%}
+
+    body{
+      min-height:100vh;
+      width:100vw;
+      overflow-x:hidden;
+  background-image: linear-gradient(to bottom right, rgb(136, 0, 0), #4a0404);      color:#e6eef8;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:1.5vh;
+    }
+
+    /* wrapper that will be scaled when needed */
+    .wrap{
+      width:100%;
+      max-width:1200px;
+      margin:0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:1.2vh;
+      transform-origin:top center;
+      transition:transform 140ms ease;
+    }
+
+    /* header small and responsive */
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      border-radius: 7px;
+      background-image: linear-gradient(to right, #343166 , #BB2235);
+      padding:0.6vh 1vh;
+      flex-wrap:wrap;
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:72px;height:72px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .logo img{width:100%;height:100%;object-fit:contain;border-radius:8px;display:block}
+    
+    
+    h1{font-size:clamp(16px,2.2vw,20px);margin:0}
+    .subtitle{font-size:clamp(11px,1.2vw,13px);color:var(--muted)}
+
+    .header-actions{display:flex;gap:10px;align-items:center}
+    .btn{
+      padding:8px 16px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:13px;
+      font-weight:500;
+      transition:all 0.2s ease;
+      background:var(--accent);
+      color:white;
+    }
+    .btn:hover{background:#6d28d9;transform:translateY(-1px)}
+    .btn.secondary{background:rgba(255,255,255,0.1)}
+    .btn.secondary:hover{background:rgba(255,255,255,0.15)}
+    /* Admin login button specific color */
+    #adminBtn { background: #2F397F; color: white; }
+    #adminBtn:hover { background: #232d61; }
+
+    /* main content: grid that fills remaining space */
+    .content{
+      display:grid;
+      grid-template-columns: 1fr minmax(300px,380px);
+      grid-template-rows: auto 1fr;
+      gap:1.4vh;
+      
+      min-height:0;
+    }
+
+    /* card common */
+    .card{
+      background:linear-gradient(180deg,var(--card),#002c5a);
+      padding:clamp(12px,1.6vh,20px);
+      border-radius:12px;
+      box-shadow:0 6px 24px rgba(2,6,23,0.6);
+      display:flex;
+      flex-direction:column;
+      gap:clamp(8px,1vh,12px);
+      min-height:0;
+      overflow:visible;
+    }
+
+    /* device controls card */
+    .controls-card {
+      grid-column: 1 / -1;
+      background-image: linear-gradient(to right, #343166 , #BB2235);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: clamp(8px, 1vh, 12px);
+    }
+
+    .device-control {
+      display: flex;
+      color: black;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(8px, 1vh, 12px);
+      border-radius: 8px;
+      background-color: white ;
+      border: 1px solid rgba(255, 255, 255, 0.041);
+    }
+
+    .device-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .device-name {
+      font-weight: 600;
+      font-size: clamp(13px, 1.2vw, 15px);
+    }
+
+    .device-status {
+      font-size: clamp(12px, 1.2vw, 14px);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .device-status.on { color: var(--success); }
+    .device-status.off { color: var(--danger); }
+
+    .device-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .device-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: clamp(11px, 1vw, 13px);
+      font-weight: 700;
+      transition: all 0.3s ease;
+      min-width: 35px;
+      position: relative;
+    }
+
+    .device-btn.on {
+      background: #22c55e;
+      color: white;
+    }
+
+    .device-btn.on:hover {
+      background: #16a34a;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.6), 0 4px 12px rgba(34, 197, 94, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .device-btn.off {
+      background: #ef5350;
+      color: white;
+    }
+
+    .device-btn.off:hover {
+      background: #e53935;
+      box-shadow: 0 0 12px rgba(239, 83, 80, 0.6), 0 4px 12px rgba(239, 83, 80, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .device-btn:active {
+      transform: translateY(0);
+    }
+
+    /* schedule area */
+    .schedule-card {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    /* Make the weekly schedule card white with black text */
+    .schedule-card {
+      background: #2F397F;
+      color: #FFFFFF;
+    }
+
+    .schedule {
+      display:flex;
+      flex-direction:column;
+      gap:clamp(8px,1vh,12px);
+      align-items:stretch;
+      justify-content:flex-start;
+      overflow:visible;
+      padding-bottom:2px;
+      color: black;
+      border-radius: 7px;
+      background-color: white;
+    }
+
+    /* each day row */
+    .day-row{
+      display:flex;
+      gap:clamp(9px,1vw,12px);
+      align-items:flex-start;
+      flex-wrap:wrap;
+      padding:clamp(8px,0.8vh,10px);
+      border-radius:10px;
+      background:var(--glass);
+      min-height:0;
+    }
+
+    .day-name{
+      flex:0 0 clamp(70px,12%,110px);
+      font-weight:700;
+      font-size:clamp(12px,1.3vw,16px);
+      text-transform:capitalize;
+      justify-content: center;
+    }
+    .times{
+      display:flex;
+      gap:clamp(6px,1vw,10px);
+      flex-wrap:wrap;
+      align-items:center;
+      flex:1 1 auto;
+    }
+
+    .slot{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      padding:clamp(6px,0.8vh,10px);
+      border-radius:8px;
+      background:rgba(255,255,255,0.02);
+      min-width:clamp(80px,22%,120px);
+      max-width:48%;
+      font-size:clamp(11px,1.1vw,14px);
+      word-break:break-word;
+      position:relative;
+    }
+    .slot .title{font-weight:700}
+    .slot .meta{font-size:0.85em;color:#000}
+
+    /* Admin edit buttons on slots */
+    .slot-actions{
+      position:absolute;
+      top:4px;
+      right:4px;
+      display:none;
+      gap:4px;
+    }
+    .slot:hover .slot-actions{display:flex}
+    .slot-btn{
+      padding:4px 8px;
+      border:none;
+      border-radius:4px;
+      cursor:pointer;
+      font-size:10px;
+      font-weight:600;
+      transition:all 0.2s;
+    }
+    .slot-btn.edit{background:var(--warning);color:white}
+    .slot-btn.delete{background:var(--danger);color:white}
+    .slot-btn:hover{transform:scale(1.05)}
+
+    /* highlighted current slot */
+    .slot.current{
+      background:linear-gradient(90deg,rgb(108,180,214) 0%, #024796 100%);
+      color:#04212a;
+      transform:scale(1.02);
+      box-shadow:0 8px 30px rgba(6,182,212,0.12);
+    }
+
+    /* announce + clock card */
+    .announce{
+      grid-column: 2;
+      grid-row: 2;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align: center;
+      gap:clamp(8px,1vh,12px);
+      min-height:0;
+      width:100%;
+      background:var(--announce-gradient);
+      color:white;
+    }
+    .merged-clock{display:flex;flex-direction:column;gap:4px;width:100%}
+    .time{font-size:clamp(16px,2.2vw,20px);font-weight:700}
+    .date{font-size:clamp(11px,1.2vw,13px);color:rgba(255,255,255,0.95)}
+    .label{font-size:12px;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:0.6px}
+    .big{font-size:clamp(18px,2.8vw,26px);font-weight:800;line-height:1.05}
+    .small{font-size:clamp(11px,1.1vw,14px);color:rgba(255,255,255,0.9)}
+
+    footer{font-size:clamp(11px,1vw,13px);color:var(--muted);text-align:center;padding:1vh 0}
+
+    /* Login Modal */
+    .modal{
+      display:none;
+      position:fixed;
+      top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,0.8);
+      z-index:1000;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .modal.active{display:flex}
+    .modal-content{
+      background:linear-gradient(180deg,#1a2332,#0d1520);
+      padding:30px;
+      border-radius:16px;
+      max-width:500px;
+      width:100%;
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    }
+    .modal-header{
+      margin-bottom:20px;
+      font-size:20px;
+      font-weight:700;
+      color:white;
+    }
+    .form-group{
+      margin-bottom:16px;
+    }
+    .form-label{
+      display:block;
+      margin-bottom:6px;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:500;
+    }
+    .form-input{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:8px;
+      background:rgba(255,255,255,0.05);
+      color:white;
+      font-size:14px;
+      transition:all 0.2s;
+    }
+    .form-input:focus{
+      outline:none;
+      border-color:var(--accent);
+      background:rgba(255,255,255,0.08);
+    }
+    .form-select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:8px;
+      background:rgba(255,255,255,0.05);
+      color:white;
+      font-size:14px;
+    }
+    .modal-actions{
+      display:flex;
+      gap:10px;
+      margin-top:20px;
+    }
+    .modal-actions .btn{
+      flex:1;
+    }
+    .error-message{
+      color:var(--danger);
+      font-size:12px;
+      margin-top:10px;
+      display:none;
+    }
+    .error-message.show{display:block}
+
+    .add-class-btn{
+      width:100%;
+      padding:12px;
+      background:rgba(124,58,237,0.2);
+      border:2px dashed var(--accent);
+      border-radius:8px;
+      color:var(--accent);
+      font-weight:600;
+      cursor:pointer;
+      transition:all 0.2s;
+      margin-top:10px;
+    }
+    .add-class-btn:hover{
+      background:rgba(124,58,237,0.3);
+      transform:scale(1.02);
+    }
+
+    .hidden{display:none !important}
+
+    /* Mobile optimizations */
+    @media (max-width:768px){
+      body { 
+        padding: 8px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+      
+      .wrap {
+        overflow: visible;
+        transform: none !important;
+      }
+      
+      .content{
+        grid-template-columns:1fr;
+        grid-template-rows: auto auto auto;
+        gap: 12px;
+        min-height: 0;
+      }
+      
+      .controls-card { 
+        order: 1; 
+        grid-column: 1; 
+        grid-row: auto;
+      }
+      
+      .announce { 
+        order: 2; 
+        grid-column: 1; 
+        grid-row: auto;
+        min-height: auto;
+        padding: 16px;
+      }
+      
+      .schedule-card { 
+        order: 3; 
+        grid-column: 1; 
+        grid-row: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+      
+      .schedule {
+        overflow: visible;
+      }
+      
+      .day-row {
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+      }
+      
+      .day-name {
+        flex-basis: auto;
+        text-align: center;
+        padding: 8px 0;
+        background: rgba(124, 58, 237, 0.15);
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      
+      .times {
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .slot {
+        max-width: 100%;
+        min-width: 100%;
+        font-size: 13px;
+        padding: 10px;
+      }
+      
+      .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      
+      .device-control {
+        padding: 14px;
+      }
+      
+      .device-name {
+        font-size: 15px;
+      }
+      
+      .device-buttons {
+        gap: 10px;
+      }
+      
+      .device-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        min-width: 50px;
+      }
+      
+      .time { font-size: 24px; }
+      .date { font-size: 13px; }
+      .label { font-size: 11px; }
+      .big { font-size: 22px; }
+      .small { font-size: 13px; }
+      
+      header {
+        padding: 8px 0;
+      }
+      
+      .logo {
+        width: 62px;
+        height: 62px;
+      }
+      
+      h1 { font-size: 18px; }
+      .subtitle { font-size: 12px; }
+
+      .header-actions{
+        width:100%;
+        justify-content:flex-end;
+      }
+
+      .modal-content{
+        padding:20px;
+      }
+    }
+    
+    /* Extra small phones */
+    @media (max-width:480px){
+      body { 
+        padding: 6px;
+      }
+      
+      .wrap { 
+        gap: 10px;
+      }
+      
+      .card { 
+        padding: 12px;
+      }
+      
+      .controls-card {
+        padding: 14px;
+      }
+      
+      .controls-grid {
+        gap: 8px;
+      }
+      
+      .device-control {
+        padding: 12px;
+      }
+      
+      .device-name {
+        font-size: 14px;
+      }
+      
+      .device-btn {
+        padding: 9px 14px;
+        font-size: 12px;
+      }
+      
+      .day-row {
+        padding: 10px;
+        gap: 8px;
+      }
+      
+      .day-name {
+        font-size: 13px;
+        padding: 6px 0;
+      }
+      
+      .slot {
+        font-size: 12px;
+        padding: 9px;
+      }
+      
+      .slot .title {
+        font-size: 13px;
+      }
+      
+      .slot .meta {
+        font-size: 11px;
+      }
+      
+      .time { font-size: 22px; }
+      .date { font-size: 12px; }
+      .big { font-size: 20px; }
+      .small { font-size: 12px; }
+      
+      .logo {
+        width: 54px;
+        height: 54px;
+      }
+      
+      h1 { font-size: 16px; }
+      .subtitle { font-size: 11px; }
+      
+      footer {
+        font-size: 11px;
+        padding: 8px 0;
+      }
+
+      .modal-content{
+        padding:16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="SchedEase schedule application">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="false"><img src="accesslogo.png" alt="Access logo"></div>
+        <div>
+          <h1>Schedease</h1>
+          <div class="subtitle">Smart scheduling with wireless device control</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" id="adminBtn" onclick="showLoginModal()">Admin Login</button>
+        <button class="btn secondary hidden" id="logoutBtn" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <div class="content" id="mainContent">
+      <!-- Device Controls -->
+      <div class="card controls-card">
+        <h3 style="margin:0;font-size:clamp(14px,1.4vw,16px);margin-bottom:8px;">Device Controls</h3>
+        <div class="controls-grid">
+          <div class="device-control">
+            <div class="device-info">
+              <div class="device-name">💡 Classroom Light</div>
+              <div class="device-status" id="lightStatus">OFF</div>
+            </div>
+            <div class="device-buttons">
+              <button class="device-btn on" onclick="toggleRelay('light', 'on')">ON</button>
+              <button class="device-btn off" onclick="toggleRelay('light', 'off')">OFF</button>
+            </div>
+          </div>
+          
+          <div class="device-control">
+            <div class="device-info">
+              <div class="device-name">🌀 Cooling Fan</div>
+              <div class="device-status" id="fanStatus">OFF</div>
+            </div>
+            <div class="device-buttons">
+              <button class="device-btn on" onclick="toggleRelay('fan', 'on')">ON</button>
+              <button class="device-btn off" onclick="toggleRelay('fan', 'off')">OFF</button>
+            </div>
+          </div>
+          
+          <div class="device-control">
+            <div class="device-info">
+              <div class="device-name">🖥️ Display Monitor</div>
+              <div class="device-status" id="monitorStatus">OFF</div>
+            </div>
+            <div class="device-buttons">
+              <button class="device-btn on" onclick="toggleRelay('monitor', 'on')">ON</button>
+              <button class="device-btn off" onclick="toggleRelay('monitor', 'off')">OFF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Left: Weekly schedule -->
+      <div class="card schedule-card" id="scheduleCard" aria-labelledby="scheduleTitle">
+        <h3 id="scheduleTitle" style="margin:0;font-size:clamp(14px,1.4vw,16px)">Weekly Schedule</h3>
+        <div class="schedule" id="scheduleList"></div>
+      </div>
+
+      <!-- Right: Announcement + merged clock -->
+      <div class="card announce" id="announceCard" aria-live="polite">
+        <div class="merged-clock" aria-hidden="false">
+          <div class="time" id="time">--:--:--</div>
+          <div class="date" id="date">Loading date...</div>
+        </div>
+        <div class="label" id="announceLabel">Current (based on your local time)</div>
+        <div class="big" id="announceBig">No class right now — enjoy your break!</div>
+        <div class="small" id="announceSmall">Next: </div>
+      </div>
+    </div>
+
+    <footer>© 2025 SchedEase • Smart Classroom Management</footer>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <div class="modal-header">Admin Login</div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-input" id="loginUsername" placeholder="Enter username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="Enter password">
+      </div>
+      <div class="error-message" id="loginError">Invalid credentials</div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeLoginModal()">Cancel</button>
+        <button class="btn" onclick="login()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Class Modal -->
+  <div class="modal" id="classModal">
+    <div class="modal-content">
+      <div class="modal-header" id="classModalTitle">Add New Class</div>
+      <div class="form-group">
+        <label class="form-label">Day</label>
+        <select class="form-select" id="classDay">
+          <option value="monday">Monday</option>
+          <option value="tuesday">Tuesday</option>
+          <option value="wednesday">Wednesday</option>
+          <option value="thursday">Thursday</option>
+          <option value="friday">Friday</option>
+          <option value="saturday">Saturday</option>
+          <option value="sunday">Sunday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject Code</label>
+        <input type="text" class="form-input" id="classSubject" placeholder="e.g., NETWOR2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Professor</label>
+        <input type="text" class="form-input" id="classProf" placeholder="e.g., Mr. Apalin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Start Time</label>
+        <input type="time" class="form-input" id="classFrom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Time</label>
+        <input type="time" class="form-input" id="classTo">
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeClassModal()">Cancel</button>
+        <button class="btn" onclick="saveClass()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***** SCHEDULE data *****/
+    let SCHEDULE = {
+      monday: [
+        {from: '08:00', to: '10:00', subject: 'MATH101', prof: 'Ms. Santos'},
+        {from: '10:00', to: '12:00', subject: 'ENGCOMM', prof: 'Mr. Cruz'}
+      ],
+      tuesday: [
+        {from: '10:00', to: '13:00', subject: 'NETWOR2', prof: 'Mr. Apalin'},
+        {from: '13:00', to: '16:00', subject: 'SYSADMA', prof: 'Mr. Apalin'},
+        {from: '16:00', to: '19:00', subject: 'VISGRAD', prof: 'Mr. Baclit'}
+      ],
+      wednesday: [
+        {from: '10:00', to: '13:00', subject: 'NETWOR2', prof: 'Mr. Apalin'},
+        {from: '13:00', to: '16:00', subject: 'SYSADMA', prof: 'Mr. Apalin'},
+        {from: '16:00', to: '19:00', subject: 'VISGRAD', prof: 'Mr. Baclit'}
+      ],
+      thursday: [
+        {from: '13:00', to: '16:00', subject: 'BSITCP1', prof: 'Mr. Apalin'},
+        {from: '16:00', to: '19:00', subject: 'SISPROP', prof: 'Mr. Baclit'}
+      ],
+      friday: [
+        {from: '10:00', to: '13:00', subject: 'NETWOR2', prof: 'Mr. Apalin'},
+        {from: '13:00', to: '16:00', subject: 'SYSADMA', prof: 'Mr. Apalin'},
+        {from: '16:00', to: '19:00', subject: 'VISGRAD', prof: 'Mr. Baclit'}
+      ],
+      saturday: [
+        {from: '10:00', to: '13:00', subject: 'NETWOR2', prof: 'Mr. Apalin'},
+        {from: '13:00', to: '16:00', subject: 'SYSADMA', prof: 'Mr. Apalin'},
+        {from: '16:00', to: '19:00', subject: 'VISGRAD', prof: 'Mr. Baclit'}
+      ],
+      sunday: []
+    };
+
+    // Admin credentials (In production, this should be server-side!)
+    const ADMIN_CREDENTIALS = {
+      username: 'admin',
+      password: 'admin123'
+    };
+
+    let isAdmin = false;
+    let editingClass = null;
+
+    // Device status tracking
+    const deviceStatus = {
+      light: false,
+      fan: false,
+      monitor: false
+    };
+
+    /***** Utilities *****/
+    function pad(n){ return n.toString().padStart(2,'0'); }
+
+    function parseTimeToDate(refDate, hhmm){
+      const parts = hhmm.split(':').map(Number);
+      const d = new Date(refDate);
+      d.setHours(parts[0] || 0, parts[1] || 0, 0, 0);
+      return d;
+    }
+
+    function to12Hour(hhmm){
+      const [hRaw,mRaw] = hhmm.split(':').map(Number);
+      const ampm = (hRaw >= 12) ? 'PM' : 'AM';
+      const h = hRaw % 12 || 12;
+      return `${h}:${pad(mRaw || 0)} ${ampm}`;
+    }
+
+    /***** Admin Functions *****/
+    function showLoginModal(){
+      document.getElementById('loginModal').classList.add('active');
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').classList.remove('show');
+    }
+
+    function closeLoginModal(){
+      document.getElementById('loginModal').classList.remove('active');
+    }
+
+    function login(){
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if(username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password){
+        isAdmin = true;
+        closeLoginModal();
+        document.getElementById('adminBtn').classList.add('hidden');
+        document.getElementById('logoutBtn').classList.remove('hidden');
+        renderSchedule();
+        alert('Welcome Admin! You can now edit the schedule.');
+      } else {
+        document.getElementById('loginError').classList.add('show');
+      }
+    }
+
+    function logout(){
+      isAdmin = false;
+      document.getElementById('adminBtn').classList.remove('hidden');
+      document.getElementById('logoutBtn').classList.add('hidden');
+      renderSchedule();
+    }
+
+    function showAddClassModal(day){
+      editingClass = null;
+      document.getElementById('classModalTitle').textContent = 'Add New Class';
+      document.getElementById('classDay').value = day;
+      document.getElementById('classSubject').value = '';
+      document.getElementById('classProf').value = '';
+      document.getElementById('classFrom').value = '';
+      document.getElementById('classTo').value = '';
+      document.getElementById('classModal').classList.add('active');
+    }
+
+    function showEditClassModal(day, index){
+      const classData = SCHEDULE[day][index];
+      editingClass = {day, index};
+      document.getElementById('classModalTitle').textContent = 'Edit Class';
+      document.getElementById('classDay').value = day;
+      document.getElementById('classSubject').value = classData.subject;
+      document.getElementById('classProf').value = classData.prof;
+      document.getElementById('classFrom').value = classData.from;
+      document.getElementById('classTo').value = classData.to;
+      document.getElementById('classModal').classList.add('active');
+    }
+
+    function closeClassModal(){
+      document.getElementById('classModal').classList.remove('active');
+      editingClass = null;
+    }
+
+    function saveClass(){
+      const day = document.getElementById('classDay').value;
+      const subject = document.getElementById('classSubject').value.trim();
+      const prof = document.getElementById('classProf').value.trim();
+      const from = document.getElementById('classFrom').value;
+      const to = document.getElementById('classTo').value;
+
+      if(!subject || !prof || !from || !to){
+        alert('Please fill in all fields');
+        return;
+      }
+
+      const newClass = {from, to, subject, prof};
+
+      if(editingClass){
+        // Edit existing
+        SCHEDULE[editingClass.day][editingClass.index] = newClass;
+      } else {
+        // Add new
+        if(!SCHEDULE[day]) SCHEDULE[day] = [];
+        SCHEDULE[day].push(newClass);
+        // Sort by time
+        SCHEDULE[day].sort((a,b) => a.from.localeCompare(b.from));
+      }
+
+      closeClassModal();
+      renderSchedule();
+      saveToLocalStorage();
+    }
+
+    function deleteClass(day, index){
+      if(confirm('Are you sure you want to delete this class?')){
+        SCHEDULE[day].splice(index, 1);
+        renderSchedule();
+        saveToLocalStorage();
+      }
+    }
+
+    function saveToLocalStorage(){
+      localStorage.setItem('schedease_schedule', JSON.stringify(SCHEDULE));
+    }
+
+    function loadFromLocalStorage(){
+      const saved = localStorage.getItem('schedease_schedule');
+      if(saved){
+        try{
+          SCHEDULE = JSON.parse(saved);
+        }catch(e){
+          console.error('Failed to load schedule from storage');
+        }
+      }
+    }
+
+    /***** Device Control Functions *****/
+    function updateDeviceStatus(device, state) {
+      deviceStatus[device] = (state === 'on');
+      const statusEl = document.getElementById(device + 'Status');
+      if (statusEl) {
+        statusEl.textContent = state.toUpperCase();
+        statusEl.className = `device-status ${state}`;
+      }
+    }
+
+    function toggleRelay(device, state) {
+      const buttons = document.querySelectorAll(`[onclick*="${device}"]`);
+      buttons.forEach(btn => btn.style.opacity = '0.6');
+      
+      fetch(`/${device}?state=${state}`)
+        .then(res => res.text())
+        .then(data => {
+          console.log(`${device} set to ${state}`, data);
+          updateDeviceStatus(device, state);
+          
+          const deviceControl = buttons[0]?.closest('.device-control');
+          if (deviceControl) {
+            deviceControl.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+              deviceControl.style.transform = 'scale(1)';
+            }, 200);
+          }
+        })
+        .catch(err => {
+          console.error("Relay error:", err);
+          const statusEl = document.getElementById(device + 'Status');
+          if (statusEl) {
+            const originalText = statusEl.textContent;
+            statusEl.textContent = 'ERROR';
+            statusEl.style.color = '#ef4444';
+            setTimeout(() => {
+              statusEl.textContent = originalText;
+              statusEl.style.color = '';
+            }, 2000);
+          }
+        })
+        .finally(() => {
+          buttons.forEach(btn => btn.style.opacity = '1');
+        });
+    }
+
+    /***** Render schedule *****/
+    const scheduleListEl = document.getElementById('scheduleList');
+
+    function renderSchedule(){
+      scheduleListEl.innerHTML = '';
+      const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      for(const day of days){
+        const dayRow = document.createElement('div');
+        dayRow.className = 'day-row';
+        const dayName = document.createElement('div');
+        dayName.className = 'day-name';
+        dayName.textContent = day;
+        dayRow.appendChild(dayName);
+
+        const timesWrap = document.createElement('div');
+        timesWrap.className = 'times';
+
+        const slots = SCHEDULE[day] || [];
+        if(slots.length === 0){
+          const no = document.createElement('div');
+          no.className = 'slot';
+          no.innerHTML = `<div class="title">No scheduled classes</div>`;
+          timesWrap.appendChild(no);
+        } else {
+          slots.forEach((s, idx) => {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.dataset.from = s.from;
+            slot.dataset.to = s.to;
+            slot.innerHTML = `
+              <div class="title">${s.subject}</div>
+              <div class="meta">${to12Hour(s.from)} — ${to12Hour(s.to)} • ${s.prof}</div>
+              ${isAdmin ? `
+                <div class="slot-actions">
+                  <button class="slot-btn edit" onclick="showEditClassModal('${day}', ${idx})">✎</button>
+                  <button class="slot-btn delete" onclick="deleteClass('${day}', ${idx})">✕</button>
+                </div>
+              ` : ''}
+            `;
+            timesWrap.appendChild(slot);
+          });
+        }
+
+        // Add "Add Class" button for admins
+        if(isAdmin){
+          const addBtn = document.createElement('button');
+          addBtn.className = 'add-class-btn';
+          addBtn.textContent = '+ Add Class';
+          addBtn.onclick = () => showAddClassModal(day);
+          timesWrap.appendChild(addBtn);
+        }
+
+        dayRow.appendChild(timesWrap);
+        scheduleListEl.appendChild(dayRow);
+      }
+    }
+
+    /***** Live clock + highlight *****/
+    const timeEl = document.getElementById('time');
+    const dateEl = document.getElementById('date');
+    const announceLabel = document.getElementById('announceLabel');
+    const announceBig = document.getElementById('announceBig');
+    const announceSmall = document.getElementById('announceSmall');
+
+    function updateClockAndHighlight(){
+      const now = new Date();
+
+      let h = now.getHours();
+      const m = pad(now.getMinutes());
+      const s = pad(now.getSeconds());
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      timeEl.textContent = `${h}:${m}:${s} ${ampm}`;
+
+      dateEl.textContent = now.toLocaleDateString(undefined, {weekday:'long', year:'numeric', month:'short', day:'numeric'});
+
+      const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const todayKey = days[now.getDay()];
+      const todaysSlots = SCHEDULE[todayKey] || [];
+
+      document.querySelectorAll('.slot').forEach(el => el.classList.remove('current'));
+
+      let current = null;
+      let next = null;
+
+      for(const slot of todaysSlots){
+        const fromD = parseTimeToDate(now, slot.from);
+        const toD   = parseTimeToDate(now, slot.to);
+        if(now >= fromD && now < toD){
+          current = Object.assign({}, slot, {fromD,toD});
+          break;
+        }
+        if(now < fromD && (!next || fromD < next.fromD)){
+          next = Object.assign({}, slot, {fromD,toD});
+        }
+      }
+
+      if (current) {
+        const todayRow = [...document.querySelectorAll('.day-row')]
+          .find(row => row.querySelector('.day-name').textContent.toLowerCase() === todayKey);
+
+        if (todayRow) {
+          const selector = `.slot[data-from="${current.from}"][data-to="${current.to}"]`;
+          const els = todayRow.querySelectorAll(selector);
+          els.forEach(el => el.classList.add('current'));
+        }
+
+        announceLabel.textContent = 'ONGOING CLASS';
+        announceBig.textContent = `${current.subject} — ${current.prof}`;
+        announceSmall.textContent = `Ends at ${to12Hour(current.to)}`;
+      } else {
+        announceLabel.textContent = 'No class now';
+        announceBig.textContent = 'No class right now — enjoy your break!';
+        if (next) {
+          announceSmall.textContent = `Next: ${next.subject} (${to12Hour(next.from)} — ${to12Hour(next.to)}) • ${next.prof}`;
+        } else {
+          announceSmall.textContent = 'No more classes for today.';
+        }
+      }
+    }
+
+    /***** Animation when class starts *****/
+    let lastState = null;
+    setInterval(()=>{
+      const now = new Date();
+      const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const todayKey = days[now.getDay()];
+      const todaysSlots = SCHEDULE[todayKey] || [];
+      let isCurrent = false;
+      for(const slot of todaysSlots){
+        const fromD = parseTimeToDate(now, slot.from);
+        const toD   = parseTimeToDate(now, slot.to);
+        if(now >= fromD && now < toD){ isCurrent = true; break; }
+      }
+      if(isCurrent && lastState !== 'current'){
+        announceBig.animate([{transform:'scale(1)'},{transform:'scale(1.04)'}],{duration:360,iterations:1});
+        lastState = 'current';
+      } else if(!isCurrent){ lastState = 'none'; }
+    }, 1000);
+    announceBig.tabIndex = -1;
+
+    /***** Initialize *****/
+    loadFromLocalStorage();
+    renderSchedule();
+    updateClockAndHighlight();
+    setInterval(updateClockAndHighlight, 1000);
+
+    // Initialize device status display
+    updateDeviceStatus('light', 'off');
+    updateDeviceStatus('fan', 'off');
+    updateDeviceStatus('monitor', 'off');
+
+    // Keyboard shortcuts for modals
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape'){
+        closeLoginModal();
+        closeClassModal();
+      }
+    });
+  </script>
+</body>
+</html>
