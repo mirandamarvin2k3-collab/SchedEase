@@ -18,18 +18,23 @@
     }
 
     /* reset & base */
-    *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'SF Pro Display','SF Pro','San Francisco',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
     html,body {height:100%;width:100%}
 
     body{
       min-height:100vh;
-      width:100vw;
+      width:100%;
       overflow-x:hidden;
-  background-image: linear-gradient(to bottom right, rgb(136, 0, 0), #4a0404);      color:#e6eef8;
+      color: #FFFFFF;
+      background-image:linear-gradient(to bottom right, rgb(139, 0, 0), rgb(25, 0, 0));
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
       display:flex;
       align-items:flex-start;
       justify-content:center;
-      padding:1.5vh;
+      padding:1.5vh 0;
     }
 
     /* wrapper that will be scaled when needed */
@@ -42,6 +47,8 @@
       gap:1.2vh;
       transform-origin:top center;
       transition:transform 140ms ease;
+      padding: 0 1vh;
+      box-sizing: border-box;
     }
 
     /* header small and responsive */
@@ -61,7 +68,9 @@
     
     
     h1{font-size:clamp(16px,2.2vw,20px);margin:0}
-    .subtitle{font-size:clamp(11px,1.2vw,13px);color:var(--muted)}
+    .subtitle{font-size:clamp(11px,1.2vw,13px);
+      color:var(--muted)
+    }
 
     .header-actions{display:flex;gap:10px;align-items:center}
     .btn{
@@ -81,6 +90,7 @@
     /* Admin login button specific color */
     #adminBtn { background: #2F397F; color: white; }
     #adminBtn:hover { background: #232d61; }
+    #adminBtn {margin:10px; padding: 8x 20px;}
 
     /* main content: grid that fills remaining space */
     .content{
@@ -120,13 +130,15 @@
 
     .device-control {
       display: flex;
-      color: black;
+      color: #0b1220;
       align-items: center;
       justify-content: space-between;
-      padding: clamp(8px, 1vh, 12px);
-      border-radius: 8px;
-      background-color: white ;
-      border: 1px solid rgba(255, 255, 255, 0.041);
+      padding: clamp(12px, 1.2vh, 16px);
+      border-radius: 12px;
+      background-color: #ffffff;
+      border: none;
+      box-shadow: 0 8px 24px rgba(8,20,40,0.08), 0 2px 8px rgba(8,20,40,0.06);
+      transition:transform 160ms ease, box-shadow 160ms ease;
     }
 
     .device-info {
@@ -151,7 +163,8 @@
 
     .device-buttons {
       display: flex;
-      gap: 6px;
+      gap: 12px;
+      align-items:center;
     }
 
     .device-btn {
@@ -161,7 +174,7 @@
       cursor: pointer;
       font-size: clamp(11px, 1vw, 13px);
       font-weight: 700;
-      transition: all 0.3s ease;
+      transition: all 0.18s ease;
       min-width: 35px;
       position: relative;
     }
@@ -191,6 +204,37 @@
     .device-btn:active {
       transform: translateY(0);
     }
+
+    /* Toggle switch (single button) */
+    .switch {
+      width: 56px;
+      height: 30px;
+      border-radius: 999px;
+      background: #eef3f7;
+      border: 1px solid rgba(11,18,32,0.04);
+      display:inline-flex;
+      align-items:center;
+      padding:4px;
+      cursor:pointer;
+      position:relative;
+      transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .switch .knob{
+      width:22px;height:22px;border-radius:50%;background:white;box-shadow:0 6px 14px rgba(8,20,40,0.12);transition:transform 160ms ease;
+      transform: translateX(0);
+    }
+
+    .switch.active{
+      background: linear-gradient(90deg,#34d399,#10b981);
+      box-shadow: 0 10px 26px rgba(16,185,129,0.16), 0 4px 12px rgba(2,6,23,0.06);
+    }
+
+    .switch.active .knob{ transform: translateX(26px); }
+
+    .device-control .device-name{ display:flex; align-items:center; gap:12px; font-weight:700 }
+
+    .device-control .icon-wrapper{ width:36px;height:36px;border-radius:8px;background:rgba(11,18,32,0.03);display:flex;align-items:center;justify-content:center;font-size:18px }
 
     /* schedule area */
     .schedule-card {
@@ -289,6 +333,60 @@
       transform:scale(1.02);
       box-shadow:0 8px 30px rgba(6,182,212,0.12);
     }
+
+    /* stylish highlighted slot (recreates MATH101 look) */
+    .slot.highlight{
+      background: linear-gradient(90deg,#4c5bca 0%, #2F397F 100%);
+      color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(10,120,200,0.22), 0 4px 14px rgba(2,6,23,0.35);
+      position: relative;
+      overflow: visible;
+      padding: clamp(10px,0.9vh,12px);
+    }
+
+    .slot.highlight::before{
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      bottom: 10px;
+      width: 36%;
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(255,255,255,0.03));
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    .slot.highlight .title{font-weight:800;color:#fff}
+    .slot.highlight .meta{color:rgba(255,255,255,0.92);font-weight:600}
+
+    /* generic card-level highlight so larger cards (like announce) can reuse the slot style */
+    .card.highlight{
+      background: linear-gradient(90deg,#4c5bca 0%, #2F397F 100%);
+      color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(10,120,200,0.22), 0 6px 26px rgba(2,6,23,0.35);
+      position: relative;
+      overflow: visible;
+      padding: clamp(18px,2vh,28px);
+    }
+
+    .card.highlight::before{
+      content: '';
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      bottom: 18px;
+      width: 38%;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.02));
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    .card.highlight .big{color:#fff;font-weight:800}
+    .card.highlight .label,.card.highlight .small{color:rgba(255,255,255,0.95)}
 
     /* announce + clock card */
     .announce{
@@ -639,34 +737,40 @@
         <div class="controls-grid">
           <div class="device-control">
             <div class="device-info">
-              <div class="device-name">💡 Classroom Light</div>
-              <div class="device-status" id="lightStatus">OFF</div>
+              <div class="icon-wrapper"><img src="https://www.kindpng.com/picc/m/202-2025027_light-bulb-idea-electricity-electric-emblem-hd-png.png" alt="Light Bulb Idea Electricity Electric - Emblem, HD Png" style="width:30px;height:30px;"></div>
+              <div>
+                <div class="device-name">Classroom Light</div>
+                <div class="device-status" id="lightStatus">OFF</div>
+              </div>
             </div>
             <div class="device-buttons">
-              <button class="device-btn on" onclick="toggleRelay('light', 'on')">ON</button>
-              <button class="device-btn off" onclick="toggleRelay('light', 'off')">OFF</button>
+              <button id="lightToggle" class="switch" aria-pressed="false" onclick="toggleRelay('light')"><span class="knob"></span></button>
             </div>
           </div>
           
           <div class="device-control">
             <div class="device-info">
-              <div class="device-name">🌀 Cooling Fan</div>
-              <div class="device-status" id="fanStatus">OFF</div>
+              <div class="icon-wrapper"><img src="https://www.kindpng.com/picc/m/609-6095063_circle-fan-png-fan-icon-free-transparent-png.png" alt="Fan icon" style="width:40px;height:40px;"></div>
+              <div>
+                <div class="device-name">Cooling Fan</div>
+                <div class="device-status" id="fanStatus">OFF</div>
+              </div>
             </div>
             <div class="device-buttons">
-              <button class="device-btn on" onclick="toggleRelay('fan', 'on')">ON</button>
-              <button class="device-btn off" onclick="toggleRelay('fan', 'off')">OFF</button>
+              <button id="fanToggle" class="switch" aria-pressed="false" onclick="toggleRelay('fan')"><span class="knob"></span></button>
             </div>
           </div>
           
           <div class="device-control">
             <div class="device-info">
-              <div class="device-name">🖥️ Display Monitor</div>
-              <div class="device-status" id="monitorStatus">OFF</div>
+              <div class="icon-wrapper"><img src="https://www.kindpng.com/picc/m/131-1318457_pc-monitor-monitor-pc-icon-png-transparent-png.png" alt="Pc Monitor - Monitor Pc Icon Png, Transparent Png@kindpng.com" style="width: 40px; height: 40px;;"></div>
+              <div>
+                <div class="device-name">Display Monitor</div>
+                <div class="device-status" id="monitorStatus">OFF</div>
+              </div>
             </div>
             <div class="device-buttons">
-              <button class="device-btn on" onclick="toggleRelay('monitor', 'on')">ON</button>
-              <button class="device-btn off" onclick="toggleRelay('monitor', 'off')">OFF</button>
+              <button id="monitorToggle" class="switch" aria-pressed="false" onclick="toggleRelay('monitor')"><span class="knob"></span></button>
             </div>
           </div>
         </div>
@@ -679,7 +783,7 @@
       </div>
 
       <!-- Right: Announcement + merged clock -->
-      <div class="card announce" id="announceCard" aria-live="polite">
+      <div class="card announce highlight" id="announceCard" aria-live="polite">
         <div class="merged-clock" aria-hidden="false">
           <div class="time" id="time">--:--:--</div>
           <div class="date" id="date">Loading date...</div>
@@ -943,24 +1047,33 @@
         statusEl.textContent = state.toUpperCase();
         statusEl.className = `device-status ${state}`;
       }
+
+      // update visual toggle button if present
+      const toggleBtn = document.getElementById(device + 'Toggle');
+      if(toggleBtn){
+        const isOn = state === 'on';
+        toggleBtn.classList.toggle('active', isOn);
+        toggleBtn.setAttribute('aria-pressed', String(isOn));
+      }
     }
 
-    function toggleRelay(device, state) {
-      const buttons = document.querySelectorAll(`[onclick*="${device}"]`);
-      buttons.forEach(btn => btn.style.opacity = '0.6');
-      
+    function toggleRelay(device, state){
+      // If no explicit state provided, toggle from current
+      if(!state) state = deviceStatus[device] ? 'off' : 'on';
+
+      const toggleBtn = document.getElementById(device + 'Toggle');
+      if(toggleBtn) toggleBtn.style.opacity = '0.7';
+
       fetch(`/${device}?state=${state}`)
         .then(res => res.text())
         .then(data => {
           console.log(`${device} set to ${state}`, data);
           updateDeviceStatus(device, state);
-          
-          const deviceControl = buttons[0]?.closest('.device-control');
+
+          const deviceControl = toggleBtn?.closest('.device-control');
           if (deviceControl) {
-            deviceControl.style.transform = 'scale(1.02)';
-            setTimeout(() => {
-              deviceControl.style.transform = 'scale(1)';
-            }, 200);
+            deviceControl.style.transform = 'translateY(-4px)';
+            setTimeout(() => deviceControl.style.transform = '', 180);
           }
         })
         .catch(err => {
@@ -976,9 +1089,7 @@
             }, 2000);
           }
         })
-        .finally(() => {
-          buttons.forEach(btn => btn.style.opacity = '1');
-        });
+        .finally(() => { if(toggleBtn) toggleBtn.style.opacity = '1'; });
     }
 
     /***** Render schedule *****/
@@ -1007,7 +1118,8 @@
         } else {
           slots.forEach((s, idx) => {
             const slot = document.createElement('div');
-            slot.className = 'slot';
+            // apply the highlight style (recreates MATH101 background) to class slots
+            slot.className = 'slot highlight';
             slot.dataset.from = s.from;
             slot.dataset.to = s.to;
             slot.innerHTML = `
